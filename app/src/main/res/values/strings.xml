@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">CookBookApp</string>
+    <string name="login_title">CookBookApp</string>
+    <string name="login_subtitle">A polished recipe workspace for browsing, saving, and adding dishes.</string>
+    <string name="email_hint">Email address</string>
+    <string name="password_hint">Password</string>
+    <string name="continue_button">Continue</string>
+    <string name="demo_button">Try demo mode</string>
+    <string name="google_button">Continue with Google</string>
+    <string name="home_title">Discover recipes</string>
+    <string name="favorites_title">Your favorites</string>
+    <string name="home_subtitle">Fresh ideas and trending dishes</string>
+    <string name="favorites_subtitle">Your saved collection</string>
+    <string name="welcome_toolbar">Hello, %1$s</string>
+    <string name="search_hint">Search recipes or ingredients</string>
+    <string name="category_all">All</string>
+    <string name="category_breakfast">Breakfast</string>
+    <string name="category_dessert">Dessert</string>
+    <string name="category_vegan">Vegan</string>
+    <string name="category_quick">Quick</string>
+    <string name="category_dinner">Dinner</string>
+    <string name="add_recipe">Add recipe</string>
+    <string name="save_recipe">Save recipe</string>
+    <string name="ingredients_hint">Ingredients</string>
+    <string name="steps_hint">Steps</string>
+    <string name="summary_hint">Short summary</string>
+    <string name="title_hint">Recipe title</string>
+    <string name="category_hint">Category</string>
+    <string name="detail_ingredients">Ingredients</string>
+    <string name="detail_steps">Steps</string>
+    <string name="empty_state_title">Nothing here yet</string>
+    <string name="empty_state_message">Start by saving a favorite or adding a new recipe.</string>
+    <string name="no_results">No recipes match this filter.</string>
+    <string name="logout">Logout</string>
+    <string name="refreshing_recipes">Refreshing recipes...</string>
+    <string name="recipe_preview_fallback">A curated recipe ready to explore.</string>
+</resources>
