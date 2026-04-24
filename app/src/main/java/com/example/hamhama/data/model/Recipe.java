@@ -1,14 +1,10 @@
 package com.example.hamhama.data.model;
 
 import androidx.annotation.NonNull;
-import androidx.room.Entity;
-import androidx.room.PrimaryKey;
 
-@Entity(tableName = "recipes")
 public class Recipe {
 
     @NonNull
-    @PrimaryKey
     private String id = "";
     private long remoteId;
     private String title;

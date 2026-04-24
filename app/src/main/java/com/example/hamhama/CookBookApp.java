@@ -3,7 +3,6 @@ package com.example.hamhama;
 import android.app.Application;
 
 import com.example.hamhama.data.firebase.FirebaseSyncManager;
-import com.example.hamhama.data.local.AppDatabase;
 import com.example.hamhama.data.repository.RecipeRepository;
 import com.example.hamhama.ui.util.SessionManager;
 
@@ -32,9 +31,5 @@ public class CookBookApp extends Application {
 
     public FirebaseSyncManager getFirebaseSyncManager() {
         return firebaseSyncManager;
-    }
-
-    public AppDatabase getDatabase() {
-        return AppDatabase.getInstance(this);
     }
 }

@@ -1,7 +1,7 @@
 CookBookApp
 
 Overview
-CookBookApp is a Java Android recipe app built with MVVM, Room, Retrofit, Gson, and Material 3. It ships with a polished UI for login, home browsing, favorites, recipe details, and recipe creation.
+CookBookApp is a Java Android recipe app built with MVVM, Firestore, Retrofit, Gson, and Material 3. It ships with a polished UI for login, home browsing, favorites, recipe details, and recipe creation.
 
 Features
 - Login screen with demo mode and optional Google Sign-In placeholder.
@@ -9,13 +9,12 @@ Features
 - Recipe details with hero image, ingredients, steps, and animated favorite toggle.
 - Add Recipe screen with image picker preview and form validation.
 - Favorites screen with empty state animation.
-- Local persistence with Room.
+- Cloud persistence with Firebase Firestore.
 - Public API integration through Spoonacular.
 - Smooth transitions between screens.
 
 Project Structure
 - com.example.hamhama.CookBookApp: Application singleton.
-- data.local: Room database and DAO.
 - data.remote: Retrofit service and DTOs.
 - data.repository: Repository layer and sample data.
 - ui.auth: Login screen.
@@ -52,7 +51,6 @@ Build Notes
 - Java 17
 - Material 3 theme
 - ViewBinding enabled
-- Room database file: cookbook_app.db
 
 Run
 Open the project in Android Studio and run the app on an emulator or device.

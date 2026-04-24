@@ -5,12 +5,12 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Transformations;
 
 import com.example.hamhama.CookBookApp;
 import com.example.hamhama.BuildConfig;
 import com.example.hamhama.data.firebase.FirebaseSyncManager;
-import com.example.hamhama.data.local.AppDatabase;
-import com.example.hamhama.data.local.RecipeDao;
 import com.example.hamhama.data.model.Recipe;
 import com.example.hamhama.data.remote.ApiService;
 import com.example.hamhama.data.remote.RetrofitClient;
@@ -20,8 +20,12 @@ import com.example.hamhama.data.remote.dto.IngredientDto;
 import com.example.hamhama.data.remote.dto.RecipeSearchResponse;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -33,14 +37,13 @@ public class RecipeRepository {
 
     private static volatile RecipeRepository instance;
 
-    private final RecipeDao recipeDao;
     private final ApiService apiService;
     private final FirebaseSyncManager firebaseSyncManager;
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private final Map<String, Recipe> recipesById = new HashMap<>();
+    private final MutableLiveData<List<Recipe>> recipesLiveData = new MutableLiveData<>(new ArrayList<>());
 
     private RecipeRepository(Context context) {
-        AppDatabase database = AppDatabase.getInstance(context);
-        recipeDao = database.recipeDao();
         apiService = RetrofitClient.getApiService();
         firebaseSyncManager = ((CookBookApp) context.getApplicationContext()).getFirebaseSyncManager();
     }
@@ -57,39 +60,55 @@ public class RecipeRepository {
     }
 
     public LiveData<List<Recipe>> observeRecipes(String query, String category) {
-        return recipeDao.observeRecipes(normalizeQuery(query), normalizeCategory(category));
+        return Transformations.map(recipesLiveData, recipes -> filterRecipes(recipes, normalizeQuery(query), normalizeCategory(category), false));
     }
 
     public LiveData<List<Recipe>> observeFavorites(String query, String category) {
-        return recipeDao.observeFavorites(normalizeQuery(query), normalizeCategory(category));
+        return Transformations.map(recipesLiveData, recipes -> filterRecipes(recipes, normalizeQuery(query), normalizeCategory(category), true));
     }
 
     public LiveData<Recipe> observeRecipeById(String id) {
-        return recipeDao.observeRecipeById(id);
+        return Transformations.map(recipesLiveData, recipes -> {
+            if (recipes == null) {
+                return null;
+            }
+            for (Recipe recipe : recipes) {
+                if (recipe.getId().equals(id)) {
+                    return recipe;
+                }
+            }
+            return null;
+        });
     }
 
     public void seedInitialData() {
         executorService.execute(() -> {
-            if (recipeDao.getCountSync() == 0) {
-                recipeDao.insertAll(SampleRecipes.create());
+            synchronized (recipesById) {
+                if (!recipesById.isEmpty()) {
+                    return;
+                }
             }
+            upsertAll(SampleRecipes.create());
         });
     }
 
     public void addRecipe(Recipe recipe) {
         executorService.execute(() -> {
-            recipeDao.insert(recipe);
+            upsertRecipe(recipe);
             firebaseSyncManager.syncRecipe(recipe);
         });
     }
 
     public void toggleFavorite(Recipe recipe) {
         executorService.execute(() -> {
-            Recipe current = recipeDao.getRecipeByIdSync(recipe.getId());
+            Recipe current;
+            synchronized (recipesById) {
+                current = recipesById.get(recipe.getId());
+            }
             Recipe target = current != null ? current : recipe;
             target.setFavorite(!target.isFavorite());
             target.setUpdatedAt(System.currentTimeMillis());
-            recipeDao.insert(target);
+            upsertRecipe(target);
             firebaseSyncManager.syncRecipe(target);
         });
     }
@@ -109,9 +128,13 @@ public class RecipeRepository {
                 executorService.execute(() -> {
                     List<Recipe> recipes = new ArrayList<>();
                     for (ApiRecipeDto dto : response.body().getResults()) {
-                        recipes.add(mapRemoteRecipe(dto, null));
+                        Recipe existing;
+                        synchronized (recipesById) {
+                            existing = recipesById.get(recipeKey(dto.getId()));
+                        }
+                        recipes.add(mapRemoteRecipe(dto, existing));
                     }
-                    recipeDao.insertAll(recipes);
+                    upsertAll(recipes);
                 });
             }
 
@@ -133,8 +156,11 @@ public class RecipeRepository {
                     return;
                 }
                 executorService.execute(() -> {
-                    Recipe existing = recipeDao.getRecipeByIdSync(recipeId);
-                    recipeDao.insert(mapRemoteRecipe(response.body(), existing));
+                    Recipe existing;
+                    synchronized (recipesById) {
+                        existing = recipesById.get(recipeId);
+                    }
+                    upsertRecipe(mapRemoteRecipe(response.body(), existing));
                 });
             }
 
@@ -148,9 +174,13 @@ public class RecipeRepository {
         executorService.execute(() -> {
             List<Recipe> mapped = new ArrayList<>();
             for (ApiRecipeDto dto : recipes) {
-                mapped.add(mapRemoteRecipe(dto, recipeDao.getRecipeByIdSync(recipeKey(dto.getId()))));
+                Recipe existing;
+                synchronized (recipesById) {
+                    existing = recipesById.get(recipeKey(dto.getId()));
+                }
+                mapped.add(mapRemoteRecipe(dto, existing));
             }
-            recipeDao.insertAll(mapped);
+            upsertAll(mapped);
         });
     }
 
@@ -160,7 +190,7 @@ public class RecipeRepository {
             public void onSuccess(@NonNull List<Recipe> recipes) {
                 executorService.execute(() -> {
                     if (!recipes.isEmpty()) {
-                        recipeDao.insertAll(recipes);
+                        upsertAll(recipes);
                     }
                 });
             }
@@ -237,6 +267,89 @@ public class RecipeRepository {
 
     private String stripHtml(String text) {
         return text.replaceAll("<[^>]+>", "").trim();
+    }
+
+    private List<Recipe> filterRecipes(List<Recipe> recipes, String query, String category, boolean favoritesOnly) {
+        if (recipes == null || recipes.isEmpty()) {
+            return Collections.emptyList();
+        }
+        String normalizedQuery = normalizeQuery(query).toLowerCase(Locale.US);
+        String normalizedCategory = normalizeCategory(category);
+        List<Recipe> filtered = new ArrayList<>();
+        for (Recipe recipe : recipes) {
+            if (favoritesOnly && !recipe.isFavorite()) {
+                continue;
+            }
+            if (!matchesCategory(recipe, normalizedCategory)) {
+                continue;
+            }
+            if (!matchesQuery(recipe, normalizedQuery)) {
+                continue;
+            }
+            filtered.add(recipe);
+        }
+        filtered.sort(Comparator
+            .comparing(Recipe::isFavorite)
+            .reversed()
+            .thenComparing(Recipe::getUpdatedAt, Comparator.reverseOrder()));
+        return filtered;
+    }
+
+    private boolean matchesCategory(Recipe recipe, String category) {
+        if (TextUtils.isEmpty(category) || "All".equalsIgnoreCase(category)) {
+            return true;
+        }
+        return category.equalsIgnoreCase(recipe.getCategory());
+    }
+
+    private boolean matchesQuery(Recipe recipe, String query) {
+        if (TextUtils.isEmpty(query)) {
+            return true;
+        }
+        return containsIgnoreCase(recipe.getTitle(), query)
+                || containsIgnoreCase(recipe.getCategory(), query)
+                || containsIgnoreCase(recipe.getIngredients(), query)
+                || containsIgnoreCase(recipe.getSummary(), query);
+    }
+
+    private boolean containsIgnoreCase(String value, String query) {
+        return !TextUtils.isEmpty(value) && value.toLowerCase(Locale.US).contains(query);
+    }
+
+    private void upsertAll(List<Recipe> recipes) {
+        if (recipes == null || recipes.isEmpty()) {
+            return;
+        }
+        synchronized (recipesById) {
+            for (Recipe recipe : recipes) {
+                if (recipe != null && !TextUtils.isEmpty(recipe.getId())) {
+                    recipesById.put(recipe.getId(), recipe);
+                }
+            }
+        }
+        publishRecipes();
+    }
+
+    private void upsertRecipe(Recipe recipe) {
+        if (recipe == null || TextUtils.isEmpty(recipe.getId())) {
+            return;
+        }
+        synchronized (recipesById) {
+            recipesById.put(recipe.getId(), recipe);
+        }
+        publishRecipes();
+    }
+
+    private void publishRecipes() {
+        List<Recipe> snapshot;
+        synchronized (recipesById) {
+            snapshot = new ArrayList<>(recipesById.values());
+        }
+        snapshot.sort(Comparator
+            .comparing(Recipe::isFavorite)
+            .reversed()
+            .thenComparing(Recipe::getUpdatedAt, Comparator.reverseOrder()));
+        recipesLiveData.postValue(snapshot);
     }
 
     private String normalizeQuery(String query) {

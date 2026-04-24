@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    id("com.google.gms.google-services")
 }
 
 val spoonacularApiKey = providers.gradleProperty("SPOONACULAR_API_KEY").orNull ?: ""
@@ -65,8 +66,6 @@ dependencies {
     implementation(libs.lifecycle.viewmodel)
     implementation(libs.lifecycle.runtime)
     implementation(libs.lifecycle.common.java8)
-    implementation(libs.room.runtime)
-    annotationProcessor(libs.room.compiler)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
     implementation(libs.gson)
