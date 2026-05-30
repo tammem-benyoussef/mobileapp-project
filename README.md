@@ -1,5 +1,7 @@
 # mobileapp-project
 
+University project developed by **Tammem Ben Youssef** and **Youssef Namouchi**.
+
 Mobile app project with two parts:
 
 - Android recipe app with Firebase auth, recipe browsing, favorites, profile, and chat UI
@@ -37,16 +39,3 @@ Mobile app project with two parts:
 ```powershell
 cd chefbot
 .\start.ps1
-```
-
-### Windows batch
-
-```bat
-cd chefbot
-start.bat
-```
-
-## Notes
-
-- Do not commit `.env`, `local.properties`, or IDE cache folders.
-- The backend listens on port `8000` by default.
