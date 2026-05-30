@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.hamhama.R;
 import com.example.hamhama.data.model.Recipe;
@@ -55,12 +56,18 @@ public class HomeFragment extends Fragment implements Searchable {
         adapter = new RecipeAdapter(new RecipeAdapter.Listener() {
             @Override
             public void onRecipeClicked(Recipe recipe) {
-                ActivityTransition.open(requireActivity(), RecipeDetailActivity.newIntent(requireContext(), recipe.getId()));
+                ActivityTransition.open(requireActivity(), RecipeDetailActivity.newIntentFromSearch(requireContext(), recipe));
             }
 
             @Override
             public void onFavoriteClicked(Recipe recipe) {
                 viewModel.toggleFavorite(recipe);
+            }
+
+            @Override
+            public void onRatingChanged(Recipe recipe, float rating) {
+                recipe.setRating(rating);
+                viewModel.persistRating(recipe);
             }
         });
 
@@ -70,7 +77,7 @@ public class HomeFragment extends Fragment implements Searchable {
         binding.loadingIndicator.setVisibility(View.VISIBLE);
         binding.homeSwipeRefresh.setColorSchemeResources(R.color.primary, R.color.secondary);
         binding.homeSwipeRefresh.setOnRefreshListener(() -> {
-            viewModel.refreshRemoteRecipes(currentQuery);
+            viewModel.refreshHomeRecipes();
             binding.homeSwipeRefresh.postDelayed(() -> {
                 if (binding != null) {
                     binding.homeSwipeRefresh.setRefreshing(false);
@@ -84,10 +91,10 @@ public class HomeFragment extends Fragment implements Searchable {
 
         if ("Dessert".equals(currentCategory)) {
             binding.chipDessert.setChecked(true);
-        } else if ("Vegan".equals(currentCategory)) {
-            binding.chipVegan.setChecked(true);
-        } else if ("Quick".equals(currentCategory)) {
-            binding.chipQuick.setChecked(true);
+        } else if ("Lunch".equals(currentCategory)) {
+            binding.chipLunch.setChecked(true);
+        } else if ("Dinner".equals(currentCategory)) {
+            binding.chipDinner.setChecked(true);
         } else if ("Breakfast".equals(currentCategory)) {
             binding.chipBreakfast.setChecked(true);
         } else {
@@ -98,7 +105,8 @@ public class HomeFragment extends Fragment implements Searchable {
         binding.searchInput.setOnEditorActionListener((textView, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 currentQuery = textView.getText() == null ? "" : textView.getText().toString();
-                viewModel.refreshRemoteRecipes(currentQuery);
+                viewModel.setHomeQuery(currentQuery);
+                viewModel.refreshHomeRecipes();
                 hideKeyboard();
                 return true;
             }
@@ -114,6 +122,7 @@ public class HomeFragment extends Fragment implements Searchable {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 currentQuery = s == null ? "" : s.toString();
                 viewModel.setHomeQuery(currentQuery);
+                viewModel.refreshHomeRecipes();
             }
 
             @Override
@@ -123,14 +132,17 @@ public class HomeFragment extends Fragment implements Searchable {
 
         binding.chipAll.setOnClickListener(v -> setCategory("All"));
         binding.chipDessert.setOnClickListener(v -> setCategory("Dessert"));
-        binding.chipVegan.setOnClickListener(v -> setCategory("Vegan"));
-        binding.chipQuick.setOnClickListener(v -> setCategory("Quick"));
+        binding.chipLunch.setOnClickListener(v -> setCategory("Lunch"));
+        binding.chipDinner.setOnClickListener(v -> setCategory("Dinner"));
         binding.chipBreakfast.setOnClickListener(v -> setCategory("Breakfast"));
 
         viewModel.getHomeRecipes().observe(getViewLifecycleOwner(), this::submitRecipes);
-        viewModel.seedInitialData();
         viewModel.setHomeCategory(currentCategory);
         viewModel.setHomeQuery(currentQuery);
+        List<Recipe> existing = viewModel.getHomeRecipes().getValue();
+        if (existing == null || existing.isEmpty()) {
+            viewModel.refreshHomeRecipes();
+        }
 
         binding.loadingIndicator.setIndeterminateTintList(ContextCompat.getColorStateList(requireContext(), R.color.primary));
     }
@@ -138,10 +150,7 @@ public class HomeFragment extends Fragment implements Searchable {
     @Override
     public void onResume() {
         super.onResume();
-        if (listState != null) {
-            binding.recipeRecycler.getLayoutManager().onRestoreInstanceState(listState);
-            listState = null;
-        }
+        setChromeVisible(true);
     }
 
     @Override
@@ -185,17 +194,24 @@ public class HomeFragment extends Fragment implements Searchable {
             binding.chipAll.setChecked("All".equals(category));
             binding.chipBreakfast.setChecked("Breakfast".equals(category));
             binding.chipDessert.setChecked("Dessert".equals(category));
-            binding.chipVegan.setChecked("Vegan".equals(category));
-            binding.chipQuick.setChecked("Quick".equals(category));
+            binding.chipLunch.setChecked("Lunch".equals(category));
+            binding.chipDinner.setChecked("Dinner".equals(category));
         }
         viewModel.setHomeCategory(category);
+        viewModel.refreshHomeRecipes();
     }
 
     private void submitRecipes(List<Recipe> recipes) {
         if (binding == null) {
             return;
         }
-        adapter.submitList(recipes);
+        adapter.submitList(recipes, () -> {
+            // Restore scroll position after list is submitted
+            if (listState != null && binding != null && binding.recipeRecycler.getLayoutManager() != null) {
+                binding.recipeRecycler.getLayoutManager().onRestoreInstanceState(listState);
+                listState = null;
+            }
+        });
         boolean empty = recipes == null || recipes.isEmpty();
         binding.emptyStateGroup.getRoot().setVisibility(empty ? View.VISIBLE : View.GONE);
         binding.recipeRecycler.setVisibility(empty ? View.GONE : View.VISIBLE);
@@ -210,6 +226,12 @@ public class HomeFragment extends Fragment implements Searchable {
         InputMethodManager manager = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         if (manager != null) {
             manager.hideSoftInputFromWindow(binding.searchInput.getWindowToken(), 0);
+        }
+    }
+
+    private void setChromeVisible(boolean visible) {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).setChromeVisible(visible);
         }
     }
 }

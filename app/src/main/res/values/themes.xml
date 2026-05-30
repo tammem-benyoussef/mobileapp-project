@@ -14,18 +14,20 @@
         <item name="colorOutline">@color/outline</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@color/background</item>
-        <item name="materialButtonStyle">@style/Widget.CookBookApp.Button</item>
-        <item name="materialCardViewStyle">@style/Widget.CookBookApp.Card</item>
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:forceDarkAllowed">false</item>
+        <item name="materialButtonStyle">@style/Widget.HamHama.Button</item>
+        <item name="materialCardViewStyle">@style/Widget.HamHama.Card</item>
     </style>
 
     <style name="Theme.Hamhama" parent="Base.Theme.Hamhama" />
 
-    <style name="Widget.CookBookApp.Button" parent="Widget.Material3.Button">
+    <style name="Widget.HamHama.Button" parent="Widget.Material3.Button">
         <item name="cornerRadius">18dp</item>
         <item name="android:minHeight">52dp</item>
     </style>
 
-    <style name="Widget.CookBookApp.Card" parent="Widget.Material3.CardView.Elevated">
+    <style name="Widget.HamHama.Card" parent="Widget.Material3.CardView.Elevated">
         <item name="cardCornerRadius">24dp</item>
         <item name="cardElevation">6dp</item>
     </style>

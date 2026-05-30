@@ -1,5 +1,6 @@
 package com.example.hamhama.ui.adapter;
 
+import android.content.res.ColorStateList;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,6 +22,8 @@ public class RecipeAdapter extends ListAdapter<Recipe, RecipeAdapter.RecipeViewH
         void onRecipeClicked(Recipe recipe);
 
         void onFavoriteClicked(Recipe recipe);
+        
+        void onRatingChanged(Recipe recipe, float rating);
     }
 
     private static final DiffUtil.ItemCallback<Recipe> DIFF_CALLBACK = new DiffUtil.ItemCallback<Recipe>() {
@@ -34,6 +37,7 @@ public class RecipeAdapter extends ListAdapter<Recipe, RecipeAdapter.RecipeViewH
             return oldItem.getTitle().equals(newItem.getTitle())
                     && TextUtils.equals(oldItem.getCategory(), newItem.getCategory())
                     && TextUtils.equals(oldItem.getSummary(), newItem.getSummary())
+                    && oldItem.getRating() == newItem.getRating()
                     && oldItem.isFavorite() == newItem.isFavorite()
                     && oldItem.getUpdatedAt() == newItem.getUpdatedAt();
         }
@@ -71,7 +75,15 @@ public class RecipeAdapter extends ListAdapter<Recipe, RecipeAdapter.RecipeViewH
         void bind(Recipe recipe, Listener listener) {
             binding.recipeTitle.setText(recipe.getTitle());
             binding.recipeCategory.setText(recipe.getCategory());
+            binding.recipeMeta.setText(buildMeta(recipe));
             binding.recipeSummary.setText(getPreviewText(recipe));
+            binding.recipeRating.setRating(recipe.getRating());
+            applyCategoryColor(recipe.getCategory());
+            binding.recipeRating.setOnRatingBarChangeListener((ratingBar, rating, fromUser) -> {
+                if (fromUser && listener != null) {
+                    listener.onRatingChanged(recipe, rating);
+                }
+            });
             binding.favoriteIcon.setChecked(recipe.isFavorite());
             binding.favoriteIcon.setIconResource(recipe.isFavorite() ? R.drawable.ic_favorite_24 : R.drawable.ic_favorite_border_24);
             View.OnClickListener openDetail = v -> listener.onRecipeClicked(recipe);
@@ -89,6 +101,25 @@ public class RecipeAdapter extends ListAdapter<Recipe, RecipeAdapter.RecipeViewH
                     .placeholder(R.drawable.bg_image_placeholder)
                     .centerCrop()
                     .into(binding.recipeImage);
+        }
+
+        private String buildMeta(Recipe recipe) {
+            int minutes = 20 + Math.abs(recipe.getTitle().hashCode() % 35);
+            int calories = 260 + Math.abs(recipe.getTitle().hashCode() % 280);
+            return minutes + " min • " + calories + " kcal";
+        }
+
+        private void applyCategoryColor(String category) {
+            String value = category == null ? "" : category.trim().toLowerCase();
+            int colorRes = R.color.tag_default;
+            if (value.contains("vegan")) {
+                colorRes = R.color.tag_vegan;
+            } else if (value.contains("spicy")) {
+                colorRes = R.color.tag_spicy;
+            } else if (value.contains("dessert")) {
+                colorRes = R.color.tag_dessert;
+            }
+            binding.recipeCategory.setChipBackgroundColor(ColorStateList.valueOf(binding.getRoot().getContext().getColor(colorRes)));
         }
 
         private String getPreviewText(Recipe recipe) {

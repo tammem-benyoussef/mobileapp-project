@@ -12,8 +12,12 @@
         android:id="@+id/toolbar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_s"
         android:background="@color/background"
         android:elevation="0dp"
+        app:navigationIcon="?attr/homeAsUpIndicator"
+        app:navigationIconTint="@color/primary"
+        app:navigationContentDescription="Back"
         android:minHeight="?attr/actionBarSize"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -32,14 +36,14 @@
         app:layout_constraintTop_toBottomOf="@id/toolbar" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabAdd"
+        android:id="@+id/fabChat"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="20dp"
-        android:layout_marginBottom="84dp"
-        android:contentDescription="@string/add_recipe"
-        android:src="@drawable/ic_add_24"
-        app:backgroundTint="@color/primary"
+        android:layout_marginBottom="170dp"
+        android:contentDescription="@string/chat_with_chef"
+        android:src="@drawable/ic_chatbot_24"
+        app:backgroundTint="@color/orange_accent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:tint="@color/white" />

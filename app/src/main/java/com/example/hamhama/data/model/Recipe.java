@@ -6,20 +6,44 @@ public class Recipe {
 
     @NonNull
     private String id = "";
-    private long remoteId;
     private String title;
-    private String category;
     private String imageUrl;
+    private String summary;
+    private String instructions;
+    private String category;
+    private boolean isFavorite;
+    private float rating;
+
+    // Legacy fields kept to preserve current app and Firestore sync compatibility.
+    private long remoteId;
     private String ingredients;
     private String steps;
-    private String summary;
     private String source;
     private String localImageUri;
-    private boolean favorite;
     private long createdAt;
     private long updatedAt;
 
     public Recipe() {
+    }
+
+    public Recipe(
+            @NonNull String id,
+            String title,
+            String imageUrl,
+            String summary,
+            String instructions,
+            String category,
+            boolean isFavorite,
+            float rating
+    ) {
+        this.id = id;
+        this.title = title;
+        this.imageUrl = imageUrl;
+        this.summary = summary;
+        this.instructions = instructions;
+        this.category = category;
+        this.isFavorite = isFavorite;
+        this.rating = rating;
     }
 
     @NonNull
@@ -87,6 +111,30 @@ public class Recipe {
         this.summary = summary;
     }
 
+    public String getInstructions() {
+        return instructions;
+    }
+
+    public void setInstructions(String instructions) {
+        this.instructions = instructions;
+    }
+
+    public boolean isFavorite() {
+        return isFavorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        isFavorite = favorite;
+    }
+
+    public float getRating() {
+        return rating;
+    }
+
+    public void setRating(float rating) {
+        this.rating = rating;
+    }
+
     public String getSource() {
         return source;
     }
@@ -101,14 +149,6 @@ public class Recipe {
 
     public void setLocalImageUri(String localImageUri) {
         this.localImageUri = localImageUri;
-    }
-
-    public boolean isFavorite() {
-        return favorite;
-    }
-
-    public void setFavorite(boolean favorite) {
-        this.favorite = favorite;
     }
 
     public long getCreatedAt() {
@@ -128,9 +168,26 @@ public class Recipe {
     }
 
     public String getDisplayImage() {
-        if (localImageUri != null && !localImageUri.isEmpty()) {
-            return localImageUri;
-        }
         return imageUrl;
+    }
+
+    public Recipe copy() {
+        Recipe copy = new Recipe();
+        copy.id = this.id;
+        copy.title = this.title;
+        copy.imageUrl = this.imageUrl;
+        copy.summary = this.summary;
+        copy.instructions = this.instructions;
+        copy.category = this.category;
+        copy.isFavorite = this.isFavorite;
+        copy.rating = this.rating;
+        copy.remoteId = this.remoteId;
+        copy.ingredients = this.ingredients;
+        copy.steps = this.steps;
+        copy.source = this.source;
+        copy.localImageUri = this.localImageUri;
+        copy.createdAt = this.createdAt;
+        copy.updatedAt = this.updatedAt;
+        return copy;
     }
 }

@@ -18,7 +18,6 @@ public class CookBookApp extends Application {
         firebaseSyncManager = new FirebaseSyncManager(this);
         sessionManager = new SessionManager(this);
         recipeRepository = RecipeRepository.getInstance(this);
-        recipeRepository.seedInitialData();
     }
 
     public RecipeRepository getRecipeRepository() {

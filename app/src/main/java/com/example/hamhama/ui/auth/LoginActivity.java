@@ -6,8 +6,6 @@ import android.text.TextUtils;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
@@ -22,6 +20,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private ActivityLoginBinding binding;
     private AuthViewModel viewModel;
+    private boolean redirectToMain;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -31,20 +30,14 @@ public class LoginActivity extends AppCompatActivity {
 
         viewModel = new ViewModelProvider(this).get(AuthViewModel.class);
 
-        if (((CookBookApp) getApplication()).getSessionManager().isLoggedIn()) {
-            openMain();
+        redirectToMain = ((CookBookApp) getApplication()).getSessionManager().isLoggedIn();
+        if (redirectToMain) {
             return;
         }
 
-        binding.loginButton.setOnClickListener(v -> viewModel.login(
-                TextUtils.isEmpty(binding.emailInput.getText()) ? "" : binding.emailInput.getText().toString(),
-                TextUtils.isEmpty(binding.passwordInput.getText()) ? "" : binding.passwordInput.getText().toString()
-        ));
+        binding.loginButton.setOnClickListener(v -> attemptLogin());
 
-        binding.demoButton.setOnClickListener(v -> {
-            ((CookBookApp) getApplication()).getSessionManager().saveSession("demo@cookbook.app", "Demo Chef");
-            openMain();
-        });
+        binding.createAccountButton.setOnClickListener(v -> ActivityTransition.open(this, new Intent(this, RegisterActivity.class)));
 
         binding.googleButton.setOnClickListener(v -> Toast.makeText(this, "Google Sign-In can be connected through Firebase Auth.", Toast.LENGTH_SHORT).show());
 
@@ -68,8 +61,49 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (redirectToMain) {
+            redirectToMain = false;
+            binding.getRoot().post(() -> {
+                if (!isFinishing() && !isDestroyed()) {
+                    openMain();
+                }
+            });
+        }
+    }
+
     private void openMain() {
         ActivityTransition.open(this, new Intent(this, MainActivity.class));
         finish();
+    }
+
+    private void attemptLogin() {
+        String email = TextUtils.isEmpty(binding.emailInput.getText()) ? "" : binding.emailInput.getText().toString().trim();
+        String password = TextUtils.isEmpty(binding.passwordInput.getText()) ? "" : binding.passwordInput.getText().toString().trim();
+
+        binding.emailInputLayout.setError(null);
+        binding.passwordInputLayout.setError(null);
+
+        boolean valid = true;
+        if (TextUtils.isEmpty(email)) {
+            binding.emailInputLayout.setError(getString(com.example.hamhama.R.string.error_email_required));
+            valid = false;
+        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            binding.emailInputLayout.setError(getString(com.example.hamhama.R.string.error_email_invalid));
+            valid = false;
+        }
+
+        if (TextUtils.isEmpty(password)) {
+            binding.passwordInputLayout.setError(getString(com.example.hamhama.R.string.error_password_required));
+            valid = false;
+        }
+
+        if (!valid) {
+            return;
+        }
+
+        viewModel.login(email, password);
     }
 }

@@ -3,8 +3,6 @@ plugins {
     id("com.google.gms.google-services")
 }
 
-val spoonacularApiKey = providers.gradleProperty("SPOONACULAR_API_KEY").orNull ?: ""
-
 android {
     namespace = "com.example.hamhama"
     compileSdk {
@@ -25,8 +23,8 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        buildConfigField("String", "SPOONACULAR_BASE_URL", "\"https://api.spoonacular.com/\"")
-        buildConfigField("String", "SPOONACULAR_API_KEY", "\"$spoonacularApiKey\"")
+        buildConfigField("String", "THEMEALDB_BASE_URL", "\"https://www.themealdb.com/api/json/v1/1/\"")
+        buildConfigField("String", "CHATBOT_BASE_URL", "\"http://10.197.93.234:8000/\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -41,8 +39,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     packaging {
@@ -72,6 +70,7 @@ dependencies {
     implementation(libs.glide)
     annotationProcessor(libs.glide.compiler)
     implementation(libs.lottie)
+    implementation("com.squareup.okhttp3:okhttp:4.10.0")
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)

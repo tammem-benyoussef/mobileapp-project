@@ -15,11 +15,13 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.hamhama.data.model.Recipe;
 import com.example.hamhama.databinding.FragmentFavoritesBinding;
 import com.example.hamhama.ui.adapter.RecipeAdapter;
 import com.example.hamhama.ui.detail.RecipeDetailActivity;
+import com.example.hamhama.ui.main.MainActivity;
 import com.example.hamhama.ui.util.ActivityTransition;
 import com.example.hamhama.ui.util.Searchable;
 import com.example.hamhama.ui.viewmodel.RecipeViewModel;
@@ -45,6 +47,7 @@ public class FavoritesFragment extends Fragment implements Searchable {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(RecipeViewModel.class);
         viewModel.setFavoriteQuery(viewModel.getFavoriteQuery());
+        viewModel.refreshFavoritesFromCloud();
         binding.favoriteSearch.setText(viewModel.getFavoriteQuery());
         adapter = new RecipeAdapter(new RecipeAdapter.Listener() {
             @Override
@@ -56,6 +59,12 @@ public class FavoritesFragment extends Fragment implements Searchable {
             public void onFavoriteClicked(Recipe recipe) {
                 viewModel.toggleFavorite(recipe);
             }
+
+            @Override
+            public void onRatingChanged(Recipe recipe, float rating) {
+                recipe.setRating(rating);
+                viewModel.persistRating(recipe);
+            }
         });
 
         binding.favoriteRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -65,6 +74,7 @@ public class FavoritesFragment extends Fragment implements Searchable {
         binding.favoritesSwipeRefresh.setOnRefreshListener(() -> {
             CharSequence query = binding.favoriteSearch.getText();
             viewModel.setFavoriteQuery(query == null ? "" : query.toString());
+            viewModel.refreshFavoritesFromCloud();
             binding.favoritesSwipeRefresh.postDelayed(() -> {
                 if (binding != null) {
                     binding.favoritesSwipeRefresh.setRefreshing(false);
@@ -93,10 +103,7 @@ public class FavoritesFragment extends Fragment implements Searchable {
     @Override
     public void onResume() {
         super.onResume();
-        if (listState != null && binding != null && binding.favoriteRecycler.getLayoutManager() != null) {
-            binding.favoriteRecycler.getLayoutManager().onRestoreInstanceState(listState);
-            listState = null;
-        }
+        setChromeVisible(true);
     }
 
     @Override
@@ -136,10 +143,22 @@ public class FavoritesFragment extends Fragment implements Searchable {
         if (binding == null) {
             return;
         }
-        adapter.submitList(recipes);
+        adapter.submitList(recipes, () -> {
+            // Restore scroll position after list is submitted
+            if (listState != null && binding != null && binding.favoriteRecycler.getLayoutManager() != null) {
+                binding.favoriteRecycler.getLayoutManager().onRestoreInstanceState(listState);
+                listState = null;
+            }
+        });
         boolean empty = recipes == null || recipes.isEmpty();
         binding.emptyFavorites.getRoot().setVisibility(empty ? View.VISIBLE : View.GONE);
         binding.favoriteRecycler.setVisibility(empty ? View.GONE : View.VISIBLE);
         binding.favoritesSwipeRefresh.setRefreshing(false);
+    }
+
+    private void setChromeVisible(boolean visible) {
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).setChromeVisible(visible);
+        }
     }
 }

@@ -15,7 +15,7 @@ public final class RetrofitClient {
     public static ApiService getApiService() {
         if (retrofit == null) {
             retrofit = new Retrofit.Builder()
-                    .baseUrl(BuildConfig.SPOONACULAR_BASE_URL)
+                    .baseUrl(BuildConfig.THEMEALDB_BASE_URL)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
         }

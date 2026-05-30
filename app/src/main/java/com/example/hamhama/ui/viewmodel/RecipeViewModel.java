@@ -11,6 +11,7 @@ import androidx.lifecycle.MediatorLiveData;
 import com.example.hamhama.CookBookApp;
 import com.example.hamhama.data.model.Recipe;
 import com.example.hamhama.data.repository.RecipeRepository;
+import com.example.hamhama.ui.util.SessionManager;
 
 import java.util.List;
 
@@ -29,9 +30,14 @@ public class RecipeViewModel extends AndroidViewModel {
 
     public RecipeViewModel(@NonNull Application application) {
         super(application);
-        repository = ((CookBookApp) application).getRecipeRepository();
+        CookBookApp app = (CookBookApp) application;
+        repository = app.getRecipeRepository();
+        SessionManager sessionManager = app.getSessionManager();
+        homeQuery = normalize(sessionManager.getHomeQuery());
+        homeCategory = normalizeCategory(sessionManager.getHomeCategory());
         bindHomeSource();
         bindFavoriteSource();
+        repository.refreshFavoritesFromCloud();
     }
 
     public LiveData<List<Recipe>> getHomeRecipes() {
@@ -44,12 +50,18 @@ public class RecipeViewModel extends AndroidViewModel {
 
     public void setHomeQuery(String query) {
         homeQuery = normalize(query);
+        persistHomeState();
         bindHomeSource();
     }
 
     public void setHomeCategory(String category) {
         homeCategory = normalizeCategory(category);
+        persistHomeState();
         bindHomeSource();
+    }
+
+    public void refreshHomeRecipes() {
+        repository.refreshRemoteRecipes(homeQuery, homeCategory);
     }
 
     public void setFavoriteQuery(String query) {
@@ -62,12 +74,12 @@ public class RecipeViewModel extends AndroidViewModel {
         bindFavoriteSource();
     }
 
-    public void refreshRemoteRecipes(String query) {
-        repository.refreshRemoteRecipes(query);
-    }
-
     public void toggleFavorite(Recipe recipe) {
         repository.toggleFavorite(recipe);
+    }
+
+    public void refreshFavoritesFromCloud() {
+        repository.refreshFavoritesFromCloud();
     }
 
     public void seedInitialData() {
@@ -112,5 +124,13 @@ public class RecipeViewModel extends AndroidViewModel {
 
     private String normalizeCategory(String value) {
         return TextUtils.isEmpty(value) ? "All" : value.trim();
+    }
+
+    private void persistHomeState() {
+        ((CookBookApp) getApplication()).getSessionManager().saveHomeState(homeQuery, homeCategory);
+    }
+
+    public void persistRating(Recipe recipe) {
+        repository.persistRating(recipe);
     }
 }

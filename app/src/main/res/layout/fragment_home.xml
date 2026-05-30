@@ -11,10 +11,11 @@
         android:id="@+id/searchLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="20dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="16dp"
         android:hint="@string/search_hint"
+        app:boxBackgroundColor="@color/surface"
         app:boxBackgroundMode="outline"
         app:boxCornerRadiusBottomEnd="18dp"
         app:boxCornerRadiusBottomStart="18dp"
@@ -38,8 +39,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
         android:scrollbars="none"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -57,35 +58,55 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/category_all"
-                android:checked="true" />
+                android:checked="true"
+                app:chipBackgroundColor="@color/surface_variant"
+                app:checkedIconVisible="false"
+                app:rippleColor="@color/soft_orange"
+                android:textColor="@color/text_primary" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipBreakfast"
                 style="@style/Widget.Material3.Chip.Assist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/category_breakfast" />
+                android:text="@string/category_breakfast"
+                app:chipBackgroundColor="@color/surface_variant"
+                app:checkedIconVisible="false"
+                app:rippleColor="@color/soft_orange"
+                android:textColor="@color/text_primary" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipDessert"
                 style="@style/Widget.Material3.Chip.Assist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/category_dessert" />
+                android:text="@string/category_dessert"
+                app:chipBackgroundColor="@color/surface_variant"
+                app:checkedIconVisible="false"
+                app:rippleColor="@color/soft_orange"
+                android:textColor="@color/text_primary" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chipVegan"
+                android:id="@+id/chipLunch"
                 style="@style/Widget.Material3.Chip.Assist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/category_vegan" />
+                android:text="@string/category_lunch"
+                app:chipBackgroundColor="@color/surface_variant"
+                app:checkedIconVisible="false"
+                app:rippleColor="@color/soft_orange"
+                android:textColor="@color/text_primary" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chipQuick"
+                android:id="@+id/chipDinner"
                 style="@style/Widget.Material3.Chip.Assist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/category_quick" />
+                android:text="@string/category_dinner"
+                app:chipBackgroundColor="@color/surface_variant"
+                app:checkedIconVisible="false"
+                app:rippleColor="@color/soft_orange"
+                android:textColor="@color/text_primary" />
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
 
@@ -93,7 +114,7 @@
         android:id="@+id/loadingIndicator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="28dp"
         android:indeterminate="true"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
@@ -118,10 +139,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
+                android:nestedScrollingEnabled="true"
                 android:paddingStart="16dp"
                 android:paddingTop="12dp"
                 android:paddingEnd="16dp"
-                android:paddingBottom="96dp"
+                android:paddingBottom="104dp"
                 tools:listitem="@layout/item_recipe_card" />
 
             <include

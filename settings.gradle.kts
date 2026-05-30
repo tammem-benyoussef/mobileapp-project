@@ -11,9 +11,6 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
-}
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -24,4 +21,9 @@ dependencyResolutionManagement {
 
 rootProject.name = "Hamhama"
 include(":app")
+
+// Configure JDK toolchain for Java 11
+gradle.rootProject {
+    ext.set("jdkVersion", 11)
+}
  
